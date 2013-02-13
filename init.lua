@@ -2,9 +2,18 @@ local hp_bar = {
 	physical = false,
     collisionbox = {x=0, y=0, z=0},
 	visual = "sprite",
-	textures = {"10.png"},
+	textures = {"20.png"},
 	visual_size = {x=1, y=1/16, z=1},
 	wielder = nil,
+}
+
+local furnace_bar = {
+	physical = false,
+    collisionbox = {x=0, y=0, z=0},
+	visual = "sprite",
+	textures = {"20.png"},
+	visual_size = {x=14/16, y=1/20, z=1},
+	wielder,
 }
 
 function hp_bar:on_step(dtime)
@@ -23,7 +32,28 @@ function hp_bar:on_step(dtime)
   )   
 end
 
+function furnace_bar:on_step(dtime)
+  local position = self.wielder
+  if position == nil then 
+     self.object:remove()
+     return   
+  end
+  if minetest.env:get_node(position).name == "air" then 
+     self.object:remove()
+     return   
+  end
+  local meta = minetest.env:get_meta(position)
+  local percent = meta:get_string("perc")
+  self.object:set_properties({
+        textures = {percent .. ".png",},
+        }
+  )   
+end
+
+
 minetest.register_entity("gauges:hp_bar", hp_bar)
+
+minetest.register_entity("gauges:furnace_bar", furnace_bar)
 
 function add_HP_gauge(pl)
     local pos = pl:getpos()
@@ -35,5 +65,34 @@ function add_HP_gauge(pl)
     end
 end
 
+function add_furnace_gauge(pos, newnode, placer, oldnode, itemstack)
+    if newnode.name ~= "default:furnace" then
+       if  newnode.name ~= "default:furnace_active" then 
+           return
+       end
+    end
+    pos.y = pos.y+1
+    local ent = minetest.env:add_entity(pos, "gauges:furnace_bar")
+    pos.y = pos.y-1
+    if ent~= nil then
+       ent = ent:get_luaentity() 
+       ent.wielder = pos             
+    end
+end
+
 minetest.register_on_joinplayer(add_HP_gauge)
+minetest.register_on_placenode(add_furnace_gauge)
+
+
+
+
+
+
+
+
+
+
+
+
+
 
